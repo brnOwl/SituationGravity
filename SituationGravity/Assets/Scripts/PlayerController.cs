@@ -4,19 +4,28 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     // Store the controls from the input system
+    [Header("Input Objects")]
     [SerializeField] private PlayerInput playerInput;
     [SerializeField] private InputAction jumpAction, moveAction, sprintAction;
+    [Header("Player Movement Settings - Changeable")]
     [SerializeField] private float playerSpeed = 6.0f;
     [SerializeField] private float playerSprintSpeed = 12.0f;
+    [SerializeField] private float playerAcceleration = 0.1f;
     [SerializeField] private float jumpForce = 1.0f;
+    [SerializeField] private float doubleJumpForce = 2.0f;
     [SerializeField] private float gravityValue = -9.81f;
-    //[SerializeField] private Rigidbody rigidBody;
+    [Header("Observables")]
     [SerializeField] private bool groundedPlayer = true;
+    [SerializeField] private bool canDoubleJump = false;
+    [SerializeField] private float controllerSpeed;
+    
+
+    
 
     public CharacterController controller;
     public Transform camTransform;
     private Vector3 playerVelocity;
-    private float controllerSpeed;
+    
     
 
     // Rotation Variables
@@ -30,16 +39,17 @@ public class PlayerController : MonoBehaviour
         jumpAction = playerInput.actions["Jump"];
         moveAction = playerInput.actions["Move"];
         sprintAction = playerInput.actions["Sprint"];
-        
+        controllerSpeed = 0;
         
     }
 
     private void Update()
     {
         groundedPlayer = controller.isGrounded;
-        if (groundedPlayer && playerVelocity.y < 0)
+        if (groundedPlayer && playerVelocity.y < -1)
         {
-            playerVelocity.y = 0f;
+            playerVelocity.y = -0.5f;
+            canDoubleJump = true;
         }
 
         // Player Movement Values
@@ -53,33 +63,41 @@ public class PlayerController : MonoBehaviour
             float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
             transform.rotation = Quaternion.Euler(0f, angle, 0f);
 
-            if (sprintAction.IsPressed()) controllerSpeed = playerSprintSpeed;
-            else controllerSpeed = playerSpeed;
+            if (sprintAction.IsPressed()) controllerSpeed = Mathf.Lerp(controllerSpeed, playerSprintSpeed, playerAcceleration);
+            else controllerSpeed = Mathf.Lerp(controllerSpeed, playerSpeed, playerAcceleration);
 
             // Move the Player
             Vector3 moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
             controller.Move(moveDirection.normalized * controllerSpeed * Time.deltaTime);
-
-            
         }
-
-        
-
-        // Changes the height position of the player
-        if (jumpAction.triggered && groundedPlayer)
+        else
         {
-            //rigidBody.AddForce(new Vector3(0, jumpForce, 0), ForceMode.Impulse);
-            playerVelocity.y += Mathf.Sqrt(jumpForce * -3.0f * gravityValue);
-            
+            controllerSpeed = Mathf.Lerp(controllerSpeed, 0, playerAcceleration);
         }
+
+        PlayerJump();
+
         playerVelocity.y += gravityValue * Time.deltaTime;
         controller.Move(playerVelocity * Time.deltaTime);
 
-        //playerVelocity.y += gravityValue * Time.deltaTime;
 
         // Output to Console
         Debug.Log(direction);
         if (jumpAction.triggered) Debug.Log("Hell yeah");
     }
-    
+
+    private void PlayerJump()
+    {
+        // JUMP
+        if (jumpAction.IsPressed() && groundedPlayer)
+        {
+            playerVelocity.y = Mathf.Sqrt(jumpForce * -3.0f * gravityValue);
+        }
+        // DOUBLE JUMP
+        else if (jumpAction.triggered && !groundedPlayer && canDoubleJump)
+        { 
+            playerVelocity.y = Mathf.Sqrt(doubleJumpForce * -3.0f * gravityValue);
+            canDoubleJump = false;
+        }
+    }
 }
