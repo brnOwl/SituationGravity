@@ -42,7 +42,8 @@ public class PlayerController : MonoBehaviour
         climbing,
         crouching,
         sliding,
-        air
+        air,
+        idle
     }
 
     public bool climbing;
@@ -57,23 +58,28 @@ public class PlayerController : MonoBehaviour
         }
 
         // Mode - Sprinting
-        else if (sprintAction.IsPressed() && groundedPlayer)
+        else if (sprintAction.IsPressed() && groundedPlayer && isHorizontalMoving)
         {
             state = MovementState.sprinting;
             controllerSpeed = Mathf.Lerp(controllerSpeed, playerSprintSpeed, playerAcceleration);
         }
 
         // Mode - Walking
-        else if (groundedPlayer)
+        else if (groundedPlayer && isHorizontalMoving)
         {
             state = MovementState.walking;
             controllerSpeed = Mathf.Lerp(controllerSpeed, playerMoveSpeed, playerAcceleration);
         }
-
         // Mode - Air
-        else
+        else if (!groundedPlayer)
         {
             state = MovementState.air;
+            controllerSpeed = Mathf.Lerp(controllerSpeed, playerMoveSpeed, playerAcceleration);
+        }
+        else
+        {
+            state = MovementState.idle;
+            controllerSpeed = Mathf.Lerp(controllerSpeed, 0, playerAcceleration);
         }
     }
 
