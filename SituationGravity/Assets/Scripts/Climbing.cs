@@ -6,8 +6,8 @@ public class Climbing : MonoBehaviour
 {
     [Header("References")]
     public Transform orientation;
-    public PlayerController playerController; // rigidbody
-    public CharacterController controller;    // rigidbody
+    public PlayerController playerController;
+    public CharacterController controller;
     public LayerMask whatIsWall;
 
     [Header("Climbing")]
@@ -20,9 +20,8 @@ public class Climbing : MonoBehaviour
     [Header("ClimbJumping")]
     public float climbJumpUpForce;
     public float climbJumpBackForce;
+    
 
-    // Input jump
-    //public KeyCode jumpKey = KeyCode.Space;
     public int climbJumps;
     private int climbJumpsLeft;
 
@@ -31,10 +30,10 @@ public class Climbing : MonoBehaviour
     public float sphereCastRadius;
     public float maxWallLookAngle;
     public float wallLookAngle;
-
     private RaycastHit frontWallHit;
     private bool wallFront;
 
+    [Header("Wall Jump")]
     private Transform lastWall;
     private Vector3 lastWallNormal;
     public float minWallNormalAngleChange;
@@ -65,7 +64,7 @@ public class Climbing : MonoBehaviour
             if (climbing) StopClimbing();
         }
 
-        if (wallFront && playerController.jumpAction.IsPressed() && climbJumpsLeft > 0) ClimbJump();
+        if (wallFront && playerController.jumpAction.triggered && climbJumpsLeft > 0) ClimbJump();
     }
 
     private void WallCheck()
@@ -120,6 +119,9 @@ public class Climbing : MonoBehaviour
 
         playerController.jumpVelocity = new Vector3(playerController.jumpVelocity.x, 0f, playerController.jumpVelocity.z);
         playerController.jumpVelocity += forceToApply;
+        
+        // Deacceleration of jump back force
+
 
         climbJumpsLeft--;
     }
